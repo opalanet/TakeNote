@@ -447,12 +447,12 @@ dom.searchInput.addEventListener('input', () => {
 
 // ─── Drag to resize sidebar (desktop only) ─
 (function initSidebarResize() {
+  if (isMobile()) return; // No resize on mobile — sidebar is a fixed overlay
   const handle = document.createElement('div');
   handle.style.cssText = `
     position: absolute; top: 0; right: -3px; width: 6px; height: 100%;
     cursor: col-resize; z-index: 10;
   `;
-  dom.sidebar.style.position = 'relative';
   dom.sidebar.appendChild(handle);
 
   let dragging = false, startX, startW;
