@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TakeNote</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">◈</span>
+          <span class="logo-text">TakeNote</span>
+        </div>
+        <button id="new-note-btn" title="New note (Ctrl+N)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Search notes…" />
+      </div>
+
+      <div class="sidebar-section-label">NOTES</div>
+      <ul id="notes-list"></ul>
+    </aside>
+
+    <!-- Main Editor Area -->
+    <main id="main">
+      <div id="empty-state">
+        <div class="empty-icon">◈</div>
+        <h2>No note selected</h2>
+        <p>Pick a note from the sidebar or create a new one.</p>
+        <button id="empty-new-btn">New Note</button>
+      </div>
+
+      <div id="editor-area" class="hidden">
+        <header id="editor-header">
+          <input type="text" id="note-title" placeholder="Untitled" spellcheck="false" />
+          <div class="header-actions">
+            <span id="save-status"></span>
+            <button id="toggle-preview-btn" title="Toggle preview (Ctrl+P)" class="icon-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Preview
+            </button>
+            <button id="delete-note-btn" title="Delete note" class="icon-btn danger">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="pane-container">
+          <div id="editor-pane">
+            <textarea id="editor" placeholder="Start writing in Markdown…" spellcheck="false"></textarea>
+          </div>
+          <div id="preview-pane" class="hidden">
+            <div id="preview-content"></div>
+          </div>
+        </div>
+
+        <footer id="editor-footer">
+          <span id="word-count">0 words</span>
+          <span id="char-count">0 chars</span>
+          <span class="footer-sep">·</span>
+          <span id="last-modified"></span>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
