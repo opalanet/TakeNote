@@ -456,3 +456,78 @@ function init() {
 }
 
 init();
+
+// ─── Export ───────────────────────────────
+document.getElementById('export-btn').addEventListener('click', () => {
+  if (state.notes.length === 0) {
+    showToast('⚠ No notes to export');
+    return;
+  }
+
+  const payload = {
+    app: 'TakeNote',
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    notes: state.notes,
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href     = url;
+  a.download = `takenote-export-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showToast(`✦ Exported ${state.notes.length} note${state.notes.length !== 1 ? 's' : ''}`);
+});
+
+// ─── Import ───────────────────────────────
+const importFileInput = document.getElementById('import-file-input');
+
+document.getElementById('import-btn').addEventListener('click', () => {
+  importFileInput.value = '';   // reset so same file can be re-imported
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', () => {
+  const file = importFileInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Accept either a TakeNote export envelope OR a raw array of notes
+      const incoming = Array.isArray(data) ? data : (data.notes ?? null);
+
+      if (!Array.isArray(incoming)) throw new Error('Unrecognized format');
+
+      // Validate each note has at minimum an id and content field
+      const valid = incoming.filter(n => n && typeof n.id === 'string' && typeof n.content === 'string');
+      if (valid.length === 0) throw new Error('No valid notes found in file');
+
+      // Merge: incoming notes that don't already exist (by id) are prepended
+      const existingIds = new Set(state.notes.map(n => n.id));
+      const newNotes    = valid.filter(n => !existingIds.has(n.id));
+      const dupes       = valid.length - newNotes.length;
+
+      state.notes = [...newNotes, ...state.notes];
+      saveNotes();
+      renderSidebar(dom.searchInput.value);
+
+      let msg = `✦ Imported ${newNotes.length} note${newNotes.length !== 1 ? 's' : ''}`;
+      if (dupes > 0) msg += ` (${dupes} duplicate${dupes !== 1 ? 's' : ''} skipped)`;
+      showToast(msg, 3000);
+
+      // Open first imported note if nothing is active
+      if (!state.activeId && newNotes.length > 0) openNote(newNotes[0].id);
+
+    } catch (err) {
+      showToast(`✖ Import failed: ${err.message}`, 3500);
+    }
+  };
+  reader.readAsText(file);
+});
