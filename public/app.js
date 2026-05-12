@@ -1,14 +1,16 @@
 /* ==========================================
    TakeNote — app.js
    Obsidian-inspired Markdown note taking app
+   Mobile-friendly update
    ========================================== */
 
 // ─── State ────────────────────────────────
 const state = {
-  notes: [],          // [{ id, title, content, createdAt, updatedAt }]
+  notes: [],
   activeId: null,
-  previewMode: false, // false = editor only, true = split view
+  previewMode: false,
   saveTimer: null,
+  sidebarOpen: false,
 };
 
 // ─── Storage helpers ──────────────────────
@@ -29,26 +31,58 @@ function saveNotes() {
 const $ = id => document.getElementById(id);
 
 const dom = {
-  sidebar:         $('sidebar'),
-  notesList:       $('notes-list'),
-  searchInput:     $('search-input'),
-  newNoteBtn:      $('new-note-btn'),
-  emptyState:      $('empty-state'),
-  emptyNewBtn:     $('empty-new-btn'),
-  editorArea:      $('editor-area'),
-  noteTitle:       $('note-title'),
-  editor:          $('editor'),
-  previewPane:     $('preview-pane'),
-  previewContent:  $('preview-content'),
-  paneContainer:   $('pane-container'),
-  togglePreviewBtn:$('toggle-preview-btn'),
-  deleteNoteBtn:   $('delete-note-btn'),
-  saveStatus:      $('save-status'),
-  wordCount:       $('word-count'),
-  charCount:       $('char-count'),
-  lastModified:    $('last-modified'),
-  toast:           $('toast'),
+  sidebar:           $('sidebar'),
+  sidebarBackdrop:   $('sidebar-backdrop'),
+  sidebarCloseBtn:   $('sidebar-close-btn'),
+  hamburgerBtn:      $('hamburger-btn'),
+  mobileNewNoteBtn:  $('mobile-new-note-btn'),
+  mobileNoteTitleDisplay: $('mobile-note-title-display'),
+  notesList:         $('notes-list'),
+  searchInput:       $('search-input'),
+  newNoteBtn:        $('new-note-btn'),
+  emptyState:        $('empty-state'),
+  emptyNewBtn:       $('empty-new-btn'),
+  editorArea:        $('editor-area'),
+  noteTitle:         $('note-title'),
+  editor:            $('editor'),
+  previewPane:       $('preview-pane'),
+  previewContent:    $('preview-content'),
+  paneContainer:     $('pane-container'),
+  togglePreviewBtn:  $('toggle-preview-btn'),
+  deleteNoteBtn:     $('delete-note-btn'),
+  saveStatus:        $('save-status'),
+  wordCount:         $('word-count'),
+  charCount:         $('char-count'),
+  lastModified:      $('last-modified'),
+  toast:             $('toast'),
+  mdToolbar:         $('md-toolbar'),
 };
+
+// ─── Sidebar open/close (mobile) ──────────
+function openSidebar() {
+  state.sidebarOpen = true;
+  dom.sidebar.classList.add('open');
+  dom.sidebarBackdrop.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+  state.sidebarOpen = false;
+  dom.sidebar.classList.remove('open');
+  dom.sidebarBackdrop.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+function isMobile() {
+  return window.innerWidth <= 640;
+}
+
+dom.hamburgerBtn.addEventListener('click', () => {
+  state.sidebarOpen ? closeSidebar() : openSidebar();
+});
+
+dom.sidebarCloseBtn.addEventListener('click', closeSidebar);
+dom.sidebarBackdrop.addEventListener('click', closeSidebar);
 
 // ─── Markdown rendering ───────────────────
 marked.setOptions({
@@ -62,7 +96,6 @@ marked.setOptions({
   },
 });
 
-// Custom renderer for task lists
 const renderer = new marked.Renderer();
 renderer.listitem = (text) => {
   if (/^\[[ x]\]/.test(text)) {
@@ -101,7 +134,6 @@ function updateNote(id, patch) {
   const note = state.notes.find(n => n.id === id);
   if (!note) return;
   Object.assign(note, patch, { updatedAt: new Date().toISOString() });
-  // Move to top of list on update
   state.notes = [note, ...state.notes.filter(n => n.id !== id)];
   saveNotes();
 }
@@ -140,7 +172,7 @@ function renderSidebar(filter = '') {
   if (visible.length === 0) {
     dom.notesList.innerHTML = `<div class="no-notes">${
       state.notes.length === 0
-        ? 'No notes yet.<br>Press <kbd>Ctrl+N</kbd> to start.'
+        ? 'No notes yet.<br>Tap <strong>+</strong> to start.'
         : 'No matches found.'
     }</div>`;
     return;
@@ -171,22 +203,30 @@ function openNote(id) {
   dom.noteTitle.value = note.title;
   dom.editor.value = note.content;
 
+  // Update mobile topbar title
+  dom.mobileNoteTitleDisplay.textContent = note.title || 'Untitled';
+
   updateFooter(note);
   updatePreview();
   renderSidebar(dom.searchInput.value);
+
+  // On mobile: close sidebar after selecting note
+  if (isMobile()) {
+    closeSidebar();
+  }
 
   dom.editor.focus();
 }
 
 function closeEditor() {
   state.activeId = null;
+  dom.mobileNoteTitleDisplay.textContent = 'TakeNote';
   dom.emptyState.classList.remove('hidden');
   dom.editorArea.classList.add('hidden');
 }
 
 function updatePreview() {
   dom.previewContent.innerHTML = renderMarkdown(dom.editor.value);
-  // Syntax highlight code blocks
   dom.previewContent.querySelectorAll('pre code').forEach(block => {
     hljs.highlightElement(block);
   });
@@ -195,8 +235,8 @@ function updatePreview() {
 function updateFooter(note) {
   const content = dom.editor.value;
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
-  dom.wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
-  dom.charCount.textContent = `${content.length} char${content.length !== 1 ? 's' : ''}`;
+  dom.wordCount.textContent = `${words}w`;
+  dom.charCount.textContent = `${content.length}c`;
   dom.lastModified.textContent = note ? `Saved ${formatDate(note.updatedAt)}` : '';
 }
 
@@ -206,14 +246,17 @@ function scheduleSave() {
   clearTimeout(state.saveTimer);
   state.saveTimer = setTimeout(() => {
     if (!state.activeId) return;
+    const newTitle = dom.noteTitle.value.trim() || 'Untitled';
     updateNote(state.activeId, {
-      title: dom.noteTitle.value.trim() || 'Untitled',
+      title: newTitle,
       content: dom.editor.value,
     });
+    // Update mobile topbar title on save
+    dom.mobileNoteTitleDisplay.textContent = newTitle;
     renderSidebar(dom.searchInput.value);
     const note = getNote(state.activeId);
     updateFooter(note);
-    dom.saveStatus.textContent = '✓ Saved';
+    dom.saveStatus.textContent = '✓';
     dom.saveStatus.className = 'saved';
     setTimeout(() => {
       dom.saveStatus.textContent = '';
@@ -246,35 +289,35 @@ function showToast(msg, duration = 2200) {
   toastTimer = setTimeout(() => dom.toast.classList.add('hidden'), duration);
 }
 
-// ─── Keyboard shortcuts ───────────────────
+// ─── Keyboard shortcuts (desktop) ─────────
 document.addEventListener('keydown', e => {
   const ctrl = e.ctrlKey || e.metaKey;
 
-  // Ctrl+N — new note
   if (ctrl && e.key === 'n') {
     e.preventDefault();
     handleNewNote();
   }
 
-  // Ctrl+P — toggle preview
   if (ctrl && e.key === 'p') {
     e.preventDefault();
     if (state.activeId) setPreviewMode(!state.previewMode);
   }
 
-  // Ctrl+F — focus search
   if (ctrl && e.key === 'f') {
     e.preventDefault();
+    if (isMobile()) openSidebar();
     dom.searchInput.focus();
     dom.searchInput.select();
   }
 
-  // Escape — blur search
   if (e.key === 'Escape') {
-    dom.searchInput.blur();
+    if (state.sidebarOpen && isMobile()) {
+      closeSidebar();
+    } else {
+      dom.searchInput.blur();
+    }
   }
 
-  // Tab in editor → insert spaces
   if (e.key === 'Tab' && document.activeElement === dom.editor) {
     e.preventDefault();
     const { selectionStart: s, selectionEnd: end } = dom.editor;
@@ -282,20 +325,55 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ─── Markdown toolbar helpers ─────────────
-function wrapSelection(before, after = before) {
+// ─── Markdown toolbar ─────────────────────
+function wrapSelection(before, after = before, placeholder = '') {
   const ta = dom.editor;
   const { selectionStart: s, selectionEnd: e } = ta;
-  const selected = ta.value.slice(s, e);
+  const selected = ta.value.slice(s, e) || placeholder;
   ta.setRangeText(`${before}${selected}${after}`, s, e, 'select');
   ta.focus();
   scheduleSave();
   if (state.previewMode) updatePreview();
 }
 
+function insertLinePrefix(prefix) {
+  const ta = dom.editor;
+  const { selectionStart: s } = ta;
+  // Find start of current line
+  const lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
+  const before = ta.value.slice(0, lineStart);
+  const after = ta.value.slice(lineStart);
+  ta.value = before + prefix + after;
+  // Move cursor after prefix
+  const newPos = lineStart + prefix.length + (s - lineStart);
+  ta.setSelectionRange(newPos, newPos);
+  ta.focus();
+  scheduleSave();
+  if (state.previewMode) updatePreview();
+}
+
+dom.mdToolbar.addEventListener('click', e => {
+  const btn = e.target.closest('.md-btn');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  switch (action) {
+    case 'bold':   wrapSelection('**', '**', 'bold text'); break;
+    case 'italic': wrapSelection('*', '*', 'italic text'); break;
+    case 'code':   wrapSelection('`', '`', 'code'); break;
+    case 'link':   wrapSelection('[', '](url)', 'link text'); break;
+    case 'h1':     insertLinePrefix('# '); break;
+    case 'h2':     insertLinePrefix('## '); break;
+    case 'ul':     insertLinePrefix('- '); break;
+    case 'ol':     insertLinePrefix('1. '); break;
+    case 'quote':  insertLinePrefix('> '); break;
+    case 'hr':     wrapSelection('\n---\n', '', ''); break;
+  }
+});
+
 // ─── Event listeners ──────────────────────
 function handleNewNote() {
   const note = createNote();
+  if (isMobile()) closeSidebar();
   openNote(note.id);
   renderSidebar(dom.searchInput.value);
   dom.noteTitle.select();
@@ -304,6 +382,7 @@ function handleNewNote() {
 
 dom.newNoteBtn.addEventListener('click', handleNewNote);
 dom.emptyNewBtn.addEventListener('click', handleNewNote);
+dom.mobileNewNoteBtn.addEventListener('click', handleNewNote);
 
 dom.notesList.addEventListener('click', e => {
   const item = e.target.closest('.note-item');
@@ -319,6 +398,7 @@ dom.editor.addEventListener('input', () => {
 
 dom.noteTitle.addEventListener('input', () => {
   scheduleSave();
+  dom.mobileNoteTitleDisplay.textContent = dom.noteTitle.value || 'Untitled';
 });
 
 dom.togglePreviewBtn.addEventListener('click', () => {
@@ -340,7 +420,32 @@ dom.searchInput.addEventListener('input', () => {
   renderSidebar(dom.searchInput.value);
 });
 
-// ─── Drag to resize sidebar ───────────────
+// ─── Swipe to open sidebar (mobile) ───────
+(function initSwipeGesture() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!isMobile()) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // Only trigger if horizontal swipe and touch started near left edge
+    if (Math.abs(dx) > Math.abs(dy) && dx > 60 && touchStartX < 30) {
+      openSidebar();
+    }
+    // Swipe left to close
+    if (Math.abs(dx) > Math.abs(dy) && dx < -60 && state.sidebarOpen) {
+      closeSidebar();
+    }
+  }, { passive: true });
+})();
+
+// ─── Drag to resize sidebar (desktop only) ─
 (function initSidebarResize() {
   const handle = document.createElement('div');
   handle.style.cssText = `
@@ -352,6 +457,7 @@ dom.searchInput.addEventListener('input', () => {
 
   let dragging = false, startX, startW;
   handle.addEventListener('mousedown', e => {
+    if (isMobile()) return;
     dragging = true;
     startX = e.clientX;
     startW = dom.sidebar.offsetWidth;
@@ -384,7 +490,7 @@ TakeNote is a minimal Markdown note-taking app inspired by Obsidian.
 
 - **Live split preview** — press \`Ctrl+P\` to toggle
 - **Auto-save** — your notes save as you type
-- **Keyboard shortcuts** for quick actions
+- **Markdown toolbar** — tap formatting buttons above the editor
 - **Full Markdown support** — headings, lists, code, tables, and more
 
 ## Markdown Cheatsheet
@@ -426,11 +532,11 @@ console.log(greet('world'));
 | Editor | ✅ Done |
 | Preview | ✅ Done |
 | Search | ✅ Done |
-| Shortcuts | ✅ Done |
+| Mobile | ✅ Done |
 
 ---
 
-Start writing your own note with **Ctrl+N** or the **+** button.
+Start writing your own note with the **+** button.
 `,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -449,7 +555,7 @@ function init() {
     const demo = seedDemoNotes();
     renderSidebar();
     openNote(demo.id);
-    setPreviewMode(true); // show preview on first run
+    setPreviewMode(true);
   } else {
     renderSidebar();
   }
@@ -487,7 +593,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
 const importFileInput = document.getElementById('import-file-input');
 
 document.getElementById('import-btn').addEventListener('click', () => {
-  importFileInput.value = '';   // reset so same file can be re-imported
+  importFileInput.value = '';
   importFileInput.click();
 });
 
@@ -499,17 +605,12 @@ importFileInput.addEventListener('change', () => {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-
-      // Accept either a TakeNote export envelope OR a raw array of notes
       const incoming = Array.isArray(data) ? data : (data.notes ?? null);
-
       if (!Array.isArray(incoming)) throw new Error('Unrecognized format');
 
-      // Validate each note has at minimum an id and content field
       const valid = incoming.filter(n => n && typeof n.id === 'string' && typeof n.content === 'string');
       if (valid.length === 0) throw new Error('No valid notes found in file');
 
-      // Merge: incoming notes that don't already exist (by id) are prepended
       const existingIds = new Set(state.notes.map(n => n.id));
       const newNotes    = valid.filter(n => !existingIds.has(n.id));
       const dupes       = valid.length - newNotes.length;
@@ -519,12 +620,10 @@ importFileInput.addEventListener('change', () => {
       renderSidebar(dom.searchInput.value);
 
       let msg = `✦ Imported ${newNotes.length} note${newNotes.length !== 1 ? 's' : ''}`;
-      if (dupes > 0) msg += ` (${dupes} duplicate${dupes !== 1 ? 's' : ''} skipped)`;
+      if (dupes > 0) msg += ` (${dupes} dupe${dupes !== 1 ? 's' : ''} skipped)`;
       showToast(msg, 3000);
 
-      // Open first imported note if nothing is active
       if (!state.activeId && newNotes.length > 0) openNote(newNotes[0].id);
-
     } catch (err) {
       showToast(`✖ Import failed: ${err.message}`, 3500);
     }
