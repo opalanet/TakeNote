@@ -50,6 +50,7 @@ const dom = {
   paneContainer:     $('pane-container'),
   togglePreviewBtn:  $('toggle-preview-btn'),
   deleteNoteBtn:     $('delete-note-btn'),
+  closeNoteBtn:      $('close-note-btn'),
   saveStatus:        $('save-status'),
   wordCount:         $('word-count'),
   charCount:         $('char-count'),
