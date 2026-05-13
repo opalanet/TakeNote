@@ -406,6 +406,11 @@ dom.togglePreviewBtn.addEventListener('click', () => {
   setPreviewMode(!state.previewMode);
 });
 
+dom.closeNoteBtn.addEventListener('click', () => {
+  closeEditor();
+  renderSidebar(dom.searchInput.value);
+});
+
 dom.deleteNoteBtn.addEventListener('click', () => {
   if (!state.activeId) return;
   const note = getNote(state.activeId);
