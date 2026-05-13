@@ -1,1 +1,52 @@
-# TakeNote
+# ◈ TakeNote
+
+TakeNote is a minimal Markdown note-taking app inspired by Obsidian.
+
+![TakeNote](https://img.shields.io/badge/client--side-only-brightgreen) ![License](https://img.shields.io/badge/license-source--available-blue)
+
+---
+
+## Features
+
+- **Markdown editor** with full GFM support — headings, bold, italic, tables, blockquotes, task lists, fenced code blocks, and more
+- **Live split preview** — toggle a side-by-side rendered view as you type
+- **Markdown toolbar** — one-click buttons for bold, italic, inline code, links, headings, lists, blockquotes, and dividers
+- **Auto-save** — notes are saved to `localStorage` automatically as you type, with a visible save indicator
+- **Search** — instant full-text search across note titles and content
+- **Import / Export** — back up all notes as JSON and restore them later; duplicate detection on import
+- **Syntax highlighting** — code blocks are highlighted via highlight.js with the GitHub Dark theme
+- **Mobile-friendly** — responsive sidebar overlay, hamburger menu, swipe-to-open gesture, and a mobile top bar showing the active note title
+- **Resizable sidebar** — drag the sidebar edge to your preferred width on desktop
+- **Word & character count** — live stats in the editor footer alongside the last-saved timestamp
+- **Keyboard shortcuts** — see the table below
+
+---
+
+## Getting Started
+
+TakeNote is a static app — there is no build step.
+
+1. Clone or download this repository.
+2. Open `public/index.html` in any modern browser.
+
+That's it. Notes are stored in your browser's `localStorage` and persist across sessions.
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl / ⌘` + `N` | Create a new note |
+| `Ctrl / ⌘` + `P` | Toggle split preview |
+| `Ctrl / ⌘` + `F` | Focus search |
+| `Tab` (in editor) | Insert 2-space indent |
+| `Escape` | Close search / close mobile sidebar |
+
+---
+
+## Import & Export
+
+**Export** — Click **Export** in the sidebar footer to download a `takenote-export-YYYY-MM-DD.json` file containing all your notes.
+
+**Import** — Click **Import** and select a previously exported JSON file. Notes with duplicate IDs are skipped automatically; a toast confirms how many were imported and how many were skipped.
