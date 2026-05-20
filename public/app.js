@@ -15,6 +15,7 @@ const state = {
 
 // ─── Storage helpers ──────────────────────
 const STORAGE_KEY = 'takenote_notes';
+const SIDEBAR_WIDTH_KEY = 'takenote_sidebar_width';
 
 function loadNotes() {
   try {
@@ -454,6 +455,14 @@ dom.searchInput.addEventListener('input', () => {
 // ─── Drag to resize sidebar (desktop only) ─
 (function initSidebarResize() {
   if (isMobile()) return; // No resize on mobile — sidebar is a fixed overlay
+
+  // Restore saved width
+  const savedWidth = parseInt(localStorage.getItem(SIDEBAR_WIDTH_KEY), 10);
+  if (savedWidth && savedWidth >= 180 && savedWidth <= 400) {
+    dom.sidebar.style.width = savedWidth + 'px';
+    dom.sidebar.style.minWidth = savedWidth + 'px';
+  }
+
   const handle = document.createElement('div');
   handle.style.cssText = `
     position: absolute; top: 0; right: -3px; width: 6px; height: 100%;
@@ -477,6 +486,9 @@ dom.searchInput.addEventListener('input', () => {
     dom.sidebar.style.minWidth = w + 'px';
   });
   document.addEventListener('mouseup', () => {
+    if (dragging) {
+      localStorage.setItem(SIDEBAR_WIDTH_KEY, dom.sidebar.offsetWidth);
+    }
     dragging = false;
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
