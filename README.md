@@ -27,9 +27,12 @@ TakeNote is a minimal Markdown note-taking app inspired by Obsidian.
 TakeNote is a static app — there is no build step.
 
 1. Clone or download this repository.
-2. Open `public/index.html` in any modern browser.
+2. Serve the `public/` folder over local HTTP server
+3. Open the URL in your browser
 
 That's it. Notes are stored in your browser's `localStorage` and persist across sessions.
+
+> **Note:** `index.html` loads `js/main.js` as an ES module, so opening the file directly via `file://` will be blocked by the browser CORS policy for modules in some browsers
 
 ---
 

@@ -699,4 +699,14 @@ body { font-family: var(--font-ui); font-size: 15px; }
 /* ===== DESKTOP: drag handle ===== */
 @media (min-width: 641px) {
   /* sidebar is already position:relative in base rule */
+
+  .sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10;
+  }
 }
