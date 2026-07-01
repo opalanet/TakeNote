@@ -537,6 +537,17 @@ body { font-family: var(--font-ui); font-size: 15px; }
 #pane-container.split #editor-pane { flex: 0 0 50%; border-right: 1px solid var(--border); }
 #pane-container.split #preview-pane { flex: 1; display: block !important; }
 
+/* Reading mode — rendered Markdown fills the pane,
+   editor textarea is hidden, click anywhere to switch to editing. */
+#pane-container.reading #editor-pane { display: none; }
+#pane-container.reading #preview-pane {
+  display: block !important;
+  flex: 1;
+  border-left: none;
+  cursor: text;
+}
+#pane-container.reading #md-toolbar { display: none; }
+
 /* Footer */
 #editor-footer {
   height: var(--footer-h);

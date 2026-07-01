@@ -27,15 +27,13 @@ export function openNote(id) {
   dom.mobileNoteTitleDisplay.textContent = note.title || 'Untitled';
 
   updateFooter(note);
-  updatePreview();
+  enterReadingMode();
   renderSidebar(dom.searchInput.value);
 
   // On mobile: close sidebar after selecting note
   if (isMobile()) {
     closeSidebar();
   }
-
-  dom.editor.focus();
 }
 
 export function closeEditor() {
@@ -50,6 +48,29 @@ export function updatePreview() {
   dom.previewContent.querySelectorAll('pre code').forEach(block => {
     hljs.highlightElement(block);
   });
+}
+
+/* ----- reading / editing modes -----
+   Reading mode: rendered Markdown fills the pane (default on open).
+   Editing mode: raw textarea, entered by clicking/tapping the preview. */
+
+export function enterReadingMode() {
+  if (state.previewMode) return; // manual split-preview takes priority
+  state.readingMode = true;
+  updatePreview();
+  dom.paneContainer.classList.add('reading');
+}
+
+export function enterEditMode(focusOptions) {
+  if (state.previewMode) return; // already showing editor alongside preview
+  state.readingMode = false;
+  dom.paneContainer.classList.remove('reading');
+  dom.editor.focus();
+  if (focusOptions?.selectAll) {
+    dom.editor.select();
+  } else if (focusOptions?.caretPos != null) {
+    dom.editor.setSelectionRange(focusOptions.caretPos, focusOptions.caretPos);
+  }
 }
 
 export function updateFooter(note) {
@@ -87,6 +108,7 @@ export function scheduleSave() {
 export function setPreviewMode(on) {
   state.previewMode = on;
   if (on) {
+    dom.paneContainer.classList.remove('reading');
     dom.paneContainer.classList.add('split');
     dom.previewPane.classList.remove('hidden');
     dom.togglePreviewBtn.classList.add('active');
@@ -95,6 +117,9 @@ export function setPreviewMode(on) {
     dom.paneContainer.classList.remove('split');
     dom.previewPane.classList.add('hidden');
     dom.togglePreviewBtn.classList.remove('active');
+    // Returning from split-preview: go back to reading mode, matching
+    // the default style for a note that isn't being actively edited.
+    if (state.activeId) enterReadingMode();
   }
 }
 
@@ -140,5 +165,27 @@ export function initEditorEvents() {
       const { selectionStart: s, selectionEnd: end } = dom.editor;
       dom.editor.setRangeText('  ', s, end, 'end');
     }
+  });
+
+  // clicking the rendered preview enters edit mode.
+  dom.previewContent.addEventListener('mousedown', e => {
+    if (!state.readingMode || !state.activeId) return;
+    // Let clicks on real links / checkboxes behave normally instead of
+    // hijacking them into edit mode.
+    if (e.target.closest('a, input[type="checkbox"]')) return;
+    e.preventDefault();
+    enterEditMode({ selectAll: false, caretPos: dom.editor.value.length });
+  });
+
+  // Leaving the textarea (click elsewhere, tab away) returns to reading mode.
+  dom.editor.addEventListener('blur', () => {
+    if (state.previewMode || !state.activeId) return;
+    // Skip the flash back to reading mode if focus is moving to the
+    // markdown toolbar — those buttons act on the editor and refocus it.
+    requestAnimationFrame(() => {
+      if (document.activeElement === dom.editor) return;
+      if (document.activeElement?.closest('#md-toolbar')) return;
+      enterReadingMode();
+    });
   });
 }

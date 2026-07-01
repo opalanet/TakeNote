@@ -6,6 +6,7 @@ export const state = {
   notes: [],
   activeId: null,
   previewMode: false,
+  readingMode: false,
   saveTimer: null,
   sidebarOpen: false,
 };

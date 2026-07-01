@@ -6,7 +6,7 @@ import { state, dom, isMobile } from './state.js';
 import { loadNotes } from './storage.js';
 import { createNote } from './notes.js';
 import { renderSidebar, initSidebarEvents } from './ui/sidebar.js';
-import { openNote, setPreviewMode, initEditorEvents } from './ui/editor.js';
+import { openNote, setPreviewMode, initEditorEvents, enterEditMode } from './ui/editor.js';
 import { initToolbar } from './ui/toolbar.js';
 import { initMobileSidebar, initSwipeGesture, closeSidebar } from './ui/mobile.js';
 import { initSidebarResize } from './ui/resize.js';
@@ -19,6 +19,7 @@ function handleNewNote() {
   const note = createNote();
   if (isMobile()) closeSidebar();
   openNote(note.id);
+  enterEditMode({ selectAll: false, caretPos: 0 });
   renderSidebar(dom.searchInput.value);
   dom.noteTitle.select();
   showToast('✦ New note created');
