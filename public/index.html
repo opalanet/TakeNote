@@ -34,6 +34,9 @@
           <span class="logo-text">TakeNote</span>
         </div>
         <div class="sidebar-header-actions">
+          <button id="new-folder-btn" title="New folder">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          </button>
           <button id="new-note-btn" title="New note (Ctrl+N)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
@@ -48,7 +51,12 @@
         <input type="text" id="search-input" placeholder="Search notes…" />
       </div>
 
-      <div class="sidebar-section-label">NOTES</div>
+      <!-- Folder list -->
+      <div class="sidebar-section-label">FOLDERS</div>
+      <ul id="folder-list"></ul>
+
+      <!-- Notes list (filtered by active folder) -->
+      <div class="sidebar-section-label" id="notes-section-label">ALL NOTES</div>
       <ul id="notes-list"></ul>
 
       <div class="sidebar-footer">
@@ -81,6 +89,10 @@
           <input type="text" id="note-title" placeholder="Untitled" spellcheck="false" />
           <div class="header-actions">
             <span id="save-status"></span>
+            <button id="move-note-btn" title="Move to folder" class="icon-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span class="btn-label">Move</span>
+            </button>
             <button id="toggle-preview-btn" title="Toggle preview (Ctrl+P)" class="icon-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <span class="btn-label">Preview</span>
@@ -127,6 +139,29 @@
   </div>
 
   <div id="toast" class="toast hidden"></div>
+
+  <!-- Folder create/rename modal -->
+  <div id="folder-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="folder-modal-title">New Folder</h3>
+      <input type="text" id="folder-name-input" placeholder="Folder name…" maxlength="60" />
+      <div class="modal-actions">
+        <button id="folder-modal-cancel" class="modal-btn secondary">Cancel</button>
+        <button id="folder-modal-confirm" class="modal-btn primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move note to folder modal -->
+  <div id="move-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Move Note to…</h3>
+      <ul id="move-folder-list"></ul>
+      <div class="modal-actions">
+        <button id="move-modal-cancel" class="modal-btn secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>

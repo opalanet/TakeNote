@@ -3,9 +3,9 @@
    ========================================== */
 
 import { state, dom, isMobile } from './state.js';
-import { loadNotes } from './storage.js';
+import { loadNotes, loadFolders } from './storage.js';
 import { createNote } from './notes.js';
-import { renderSidebar, initSidebarEvents } from './ui/sidebar.js';
+import { renderFolders, renderSidebar, initSidebarEvents } from './ui/sidebar.js';
 import { openNote, setPreviewMode, initEditorEvents, enterEditMode } from './ui/editor.js';
 import { initToolbar } from './ui/toolbar.js';
 import { initMobileSidebar, initSwipeGesture, closeSidebar } from './ui/mobile.js';
@@ -33,6 +33,7 @@ function bindNewNoteButtons() {
 
 function init() {
   state.notes = loadNotes();
+  state.folders = loadFolders();
 
   bindNewNoteButtons();
   initSidebarEvents();
@@ -43,6 +44,8 @@ function init() {
   initSidebarResize();
   initShortcuts(handleNewNote);
   initImportExport();
+
+  renderFolders();
 
   if (state.notes.length === 0) {
     const demo = seedDemoNotes();

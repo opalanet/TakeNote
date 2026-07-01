@@ -4,9 +4,10 @@
 
 import { state, dom } from './state.js';
 import { saveNotes } from './notes.js';
-import { renderSidebar } from './ui/sidebar.js';
+import { renderFolders, renderSidebar } from './ui/sidebar.js';
 import { openNote } from './ui/editor.js';
 import { showToast } from './ui/toast.js';
+import { persistFolders } from './storage.js';
 
 function exportNotes() {
   if (state.notes.length === 0) {
@@ -17,7 +18,8 @@ function exportNotes() {
   const payload = {
     app: 'TakeNote',
     exportedAt: new Date().toISOString(),
-    version: 1,
+    version: 2,
+    folders: state.folders,
     notes: state.notes,
   };
 
@@ -48,8 +50,17 @@ function handleImportFile(file) {
       const newNotes = valid.filter(n => !existingIds.has(n.id));
       const dupes = valid.length - newNotes.length;
 
+      // Import folders if present (skip duplicates by id)
+      if (Array.isArray(data.folders)) {
+        const existingFolderIds = new Set(state.folders.map(f => f.id));
+        const newFolders = data.folders.filter(f => f && typeof f.id === 'string' && !existingFolderIds.has(f.id));
+        state.folders = [...state.folders, ...newFolders];
+        persistFolders(state.folders);
+      }
+
       state.notes = [...newNotes, ...state.notes];
       saveNotes();
+      renderFolders();
       renderSidebar(dom.searchInput.value);
 
       let msg = `✦ Imported ${newNotes.length} note${newNotes.length !== 1 ? 's' : ''}`;

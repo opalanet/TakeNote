@@ -234,6 +234,7 @@ body { font-family: var(--font-ui); font-size: 15px; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 4px 8px 12px;
+  min-height: 60px;
 }
 
 #notes-list::-webkit-scrollbar { width: 4px; }
@@ -611,6 +612,232 @@ body { font-family: var(--font-ui); font-size: 15px; }
 @keyframes slideUp {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== FOLDER LIST ===== */
+#folder-list {
+  list-style: none;
+  padding: 0 8px 4px;
+  flex-shrink: 0;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.folder-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.folder-item:hover .folder-action-btn { opacity: 1; }
+.folder-item.active {
+  background: var(--bg-active);
+  color: var(--text-accent);
+}
+.folder-item.active .folder-icon svg { stroke: var(--accent); }
+
+.folder-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+.folder-item.active .folder-icon { color: var(--accent); }
+
+.folder-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-count {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+.folder-item.active .folder-count {
+  border-color: var(--accent);
+  color: var(--text-accent);
+  background: var(--accent-glow);
+}
+
+.folder-action-btn {
+  opacity: 0;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+}
+.folder-action-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+.delete-folder-btn:hover { color: var(--accent-danger); }
+
+/* New folder button in sidebar header */
+#new-folder-btn {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+#new-folder-btn:hover, #new-folder-btn:active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--text-accent);
+}
+
+/* ===== MODALS ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 150ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  animation: slideUp 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal h3 {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.modal input[type="text"] {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition);
+  margin-bottom: 16px;
+}
+.modal input[type="text"]:focus { border-color: var(--accent); }
+.modal input[type="text"]::placeholder { color: var(--text-muted); }
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-btn.secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.modal-btn.secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+.modal-btn.primary {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--text-accent);
+}
+.modal-btn.primary:hover { background: var(--accent); color: #fff; }
+
+/* Move modal folder list */
+#move-folder-list {
+  list-style: none;
+  margin-bottom: 16px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+#move-folder-list::-webkit-scrollbar { width: 4px; }
+#move-folder-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.move-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition), color var(--transition);
+  position: relative;
+}
+.move-folder-item:last-child { border-bottom: none; }
+.move-folder-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.move-folder-item.current { color: var(--text-accent); background: var(--accent-glow); }
+.move-folder-item .folder-icon { color: var(--text-muted); }
+.move-folder-item.current .folder-icon { color: var(--accent); }
+
+.current-badge {
+  margin-left: auto;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 1px 6px;
+  text-transform: uppercase;
 }
 
 /* ===== UTILS ===== */

@@ -6,7 +6,7 @@ import { state, dom, isMobile } from '../state.js';
 import { getNote, updateNote, deleteNote } from '../notes.js';
 import { renderMarkdown } from '../markdown.js';
 import { formatDate } from '../format.js';
-import { renderSidebar } from './sidebar.js';
+import { renderFolders, renderSidebar } from './sidebar.js';
 import { closeSidebar } from './mobile.js';
 import { showToast } from './toast.js';
 
@@ -154,6 +154,7 @@ export function initEditorEvents() {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     deleteNote(state.activeId);
     closeEditor();
+    renderFolders();
     renderSidebar(dom.searchInput.value);
     showToast(`🗑 "${title}" deleted`);
   });

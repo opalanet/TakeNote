@@ -14,6 +14,7 @@ export function createNote() {
     id: makeId(),
     title: 'Untitled',
     content: '',
+    folderId: state.activeFolderId || null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

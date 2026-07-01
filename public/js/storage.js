@@ -3,6 +3,7 @@
    ========================================== */
 
 export const STORAGE_KEY = 'takenote_notes';
+export const FOLDERS_KEY = 'takenote_folders';
 export const SIDEBAR_WIDTH_KEY = 'takenote_sidebar_width';
 
 export function loadNotes() {
@@ -16,6 +17,19 @@ export function loadNotes() {
 
 export function persistNotes(notes) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
+
+export function loadFolders() {
+  try {
+    const raw = localStorage.getItem(FOLDERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function persistFolders(folders) {
+  localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
 }
 
 export function loadSidebarWidth() {
