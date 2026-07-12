@@ -37,6 +37,7 @@ export const dom = {
   paneContainer:           $('pane-container'),
   togglePreviewBtn:        $('toggle-preview-btn'),
   deleteNoteBtn:           $('delete-note-btn'),
+  restoreNoteBtn:          $('restore-note-btn'),
   closeNoteBtn:            $('close-note-btn'),
   moveNoteBtn:             $('move-note-btn'),
   saveStatus:              $('save-status'),

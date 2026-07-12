@@ -5,7 +5,7 @@
 import { state, dom } from '../state.js';
 import { formatDate, notePreviewText, escHtml } from '../format.js';
 import { createFolder, deleteFolder, renameFolder, getFolderById } from '../folders.js';
-import { updateNote, saveNotes } from '../notes.js';
+import { updateNote, saveNotes, permanentlyDeleteNote, restoreNote, daysUntilPurge } from '../notes.js';
 import { persistNotes } from '../storage.js';
 import { showToast } from './toast.js';
 
@@ -14,7 +14,12 @@ import { showToast } from './toast.js';
 export function renderFolders() {
   const ul = dom.folderList;
 
-  const allCount = state.notes.length;
+  const liveNotes = state.notes.filter(n => !n.deletedAt);
+  const trashedNotes = state.notes.filter(n => n.deletedAt);
+  const allCount = liveNotes.length;
+  const trashCount = trashedNotes.length;
+  const isTrash = state.activeFolderId === '__trash__';
+
   const rows = [
     `<li class="folder-item ${state.activeFolderId === null ? 'active' : ''}" data-folder-id="__all__">
       <span class="folder-icon">
@@ -26,7 +31,7 @@ export function renderFolders() {
   ];
 
   for (const folder of state.folders) {
-    const count = state.notes.filter(n => n.folderId === folder.id).length;
+    const count = liveNotes.filter(n => n.folderId === folder.id).length;
     rows.push(`
       <li class="folder-item ${state.activeFolderId === folder.id ? 'active' : ''}" data-folder-id="${folder.id}">
         <span class="folder-icon">
@@ -44,16 +49,34 @@ export function renderFolders() {
     `);
   }
 
+  // Trash entry — always at the bottom, separated
+  rows.push(`
+    <li class="folder-item folder-item-trash ${isTrash ? 'active' : ''}" data-folder-id="__trash__">
+      <span class="folder-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </span>
+      <span class="folder-name">Trash</span>
+      ${trashCount > 0 ? `<span class="folder-count trash-count">${trashCount}</span>` : ''}
+    </li>
+  `);
+
   ul.innerHTML = rows.join('');
 }
 
 /* ── Note list section ──────────────────────────────────── */
 
 export function renderSidebar(filter = '') {
+  const isTrash = state.activeFolderId === '__trash__';
+
   // Determine which notes to show based on active folder
-  let pool = state.activeFolderId === null
-    ? state.notes
-    : state.notes.filter(n => n.folderId === state.activeFolderId);
+  let pool;
+  if (isTrash) {
+    pool = state.notes.filter(n => n.deletedAt);
+  } else if (state.activeFolderId === null) {
+    pool = state.notes.filter(n => !n.deletedAt);
+  } else {
+    pool = state.notes.filter(n => !n.deletedAt && n.folderId === state.activeFolderId);
+  }
 
   const q = filter.toLowerCase();
   const visible = pool.filter(n =>
@@ -63,7 +86,9 @@ export function renderSidebar(filter = '') {
   // Section label reflects context
   const sectionLabel = document.getElementById('notes-section-label');
   if (sectionLabel) {
-    if (state.activeFolderId) {
+    if (isTrash) {
+      sectionLabel.textContent = 'TRASH';
+    } else if (state.activeFolderId) {
       const folder = getFolderById(state.activeFolderId);
       sectionLabel.textContent = folder ? folder.name.toUpperCase() : 'NOTES';
     } else {
@@ -73,12 +98,34 @@ export function renderSidebar(filter = '') {
 
   if (visible.length === 0) {
     dom.notesList.innerHTML = `<div class="no-notes">${
-      pool.length === 0
-        ? (state.activeFolderId
-            ? 'No notes in this folder.<br>Create one with <strong>+</strong>.'
-            : 'No notes yet.<br>Tap <strong>+</strong> to start.')
-        : 'No matches found.'
+      isTrash
+        ? 'Trash is empty.'
+        : pool.length === 0
+          ? (state.activeFolderId
+              ? 'No notes in this folder.<br>Create one with <strong>+</strong>.'
+              : 'No notes yet.<br>Tap <strong>+</strong> to start.')
+          : 'No matches found.'
     }</div>`;
+    return;
+  }
+
+  if (isTrash) {
+    dom.notesList.innerHTML = visible.map(n => {
+      const days = daysUntilPurge(n);
+      return `
+        <li class="note-item note-item-trash ${n.id === state.activeId ? 'active' : ''}" data-id="${n.id}">
+          <div class="note-item-title">${escHtml(n.title || 'Untitled')}</div>
+          <div class="note-item-preview">${escHtml(notePreviewText(n.content))}</div>
+          <div class="note-item-trash-meta">
+            <span class="trash-days">Deletes in ${days} day${days !== 1 ? 's' : ''}</span>
+            <span class="trash-actions">
+              <button class="trash-restore-btn" data-id="${n.id}" title="Restore note">Restore</button>
+              <button class="trash-delete-btn" data-id="${n.id}" title="Delete forever">Delete</button>
+            </span>
+          </div>
+        </li>
+      `;
+    }).join('');
     return;
   }
 
@@ -178,8 +225,39 @@ function closeMoveModal() {
 /* ── Event wiring ───────────────────────────────────────── */
 
 export function initSidebarEvents() {
-  // Click note
+  // Click note (or trash action buttons)
   dom.notesList.addEventListener('click', e => {
+    // Restore button in Trash
+    const restoreBtn = e.target.closest('.trash-restore-btn');
+    if (restoreBtn) {
+      e.stopPropagation();
+      const id = restoreBtn.dataset.id;
+      const note = state.notes.find(n => n.id === id);
+      const title = note?.title || 'Untitled';
+      restoreNote(id);
+      if (state.activeId === id) document.dispatchEvent(new CustomEvent('editor:close'));
+      renderFolders();
+      renderSidebar(dom.searchInput.value);
+      showToast(`✦ "${title}" restored`);
+      return;
+    }
+
+    // Permanent delete button in Trash
+    const deleteBtn = e.target.closest('.trash-delete-btn');
+    if (deleteBtn) {
+      e.stopPropagation();
+      const id = deleteBtn.dataset.id;
+      const note = state.notes.find(n => n.id === id);
+      const title = note?.title || 'Untitled';
+      if (!confirm(`Permanently delete "${title}"? This cannot be undone.`)) return;
+      permanentlyDeleteNote(id);
+      if (state.activeId === id) document.dispatchEvent(new CustomEvent('editor:close'));
+      renderFolders();
+      renderSidebar(dom.searchInput.value);
+      showToast(`🗑 "${title}" permanently deleted`);
+      return;
+    }
+
     const item = e.target.closest('.note-item');
     if (item) {
       document.dispatchEvent(new CustomEvent('note:open', { detail: item.dataset.id }));
@@ -229,6 +307,19 @@ export function initSidebarEvents() {
       state.activeFolderId = fid === '__all__' ? null : fid;
       renderFolders();
       renderSidebar(dom.searchInput.value);
+    }
+
+    // Empty Trash button
+    const emptyBtn = e.target.closest('#empty-trash-btn');
+    if (emptyBtn) {
+      const count = state.notes.filter(n => n.deletedAt).length;
+      if (!count) return;
+      if (!confirm(`Permanently delete all ${count} note${count !== 1 ? 's' : ''} in Trash? This cannot be undone.`)) return;
+      state.notes = state.notes.filter(n => !n.deletedAt);
+      import('../storage.js').then(({ persistNotes }) => persistNotes(state.notes));
+      renderFolders();
+      renderSidebar(dom.searchInput.value);
+      showToast('🗑 Trash emptied');
     }
   });
 

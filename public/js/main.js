@@ -4,7 +4,7 @@
 
 import { state, dom, isMobile } from './state.js';
 import { loadNotes, loadFolders } from './storage.js';
-import { createNote } from './notes.js';
+import { createNote, purgeExpiredNotes } from './notes.js';
 import { renderFolders, renderSidebar, initSidebarEvents } from './ui/sidebar.js';
 import { openNote, setPreviewMode, initEditorEvents, enterEditMode } from './ui/editor.js';
 import { initToolbar } from './ui/toolbar.js';
@@ -34,6 +34,7 @@ function bindNewNoteButtons() {
 function init() {
   state.notes = loadNotes();
   state.folders = loadFolders();
+  purgeExpiredNotes(); // auto-remove notes trashed more than 30 days ago
 
   bindNewNoteButtons();
   initSidebarEvents();

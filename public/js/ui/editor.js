@@ -3,7 +3,7 @@
    ========================================== */
 
 import { state, dom, isMobile } from '../state.js';
-import { getNote, updateNote, deleteNote } from '../notes.js';
+import { getNote, updateNote, deleteNote, permanentlyDeleteNote, restoreNote, daysUntilPurge } from '../notes.js';
 import { renderMarkdown } from '../markdown.js';
 import { formatDate } from '../format.js';
 import { renderFolders, renderSidebar } from './sidebar.js';
@@ -25,6 +25,13 @@ export function openNote(id) {
   dom.editor.value = note.content;
 
   dom.mobileNoteTitleDisplay.textContent = note.title || 'Untitled';
+
+  // Trashed notes: show Restore button, lock editing
+  const isTrashed = !!note.deletedAt;
+  dom.restoreNoteBtn.classList.toggle('hidden', !isTrashed);
+  dom.noteTitle.readOnly = isTrashed;
+  dom.editor.readOnly = isTrashed;
+  dom.editorArea.classList.toggle('trashed', isTrashed);
 
   updateFooter(note);
   enterReadingMode();
@@ -125,6 +132,7 @@ export function setPreviewMode(on) {
 
 export function initEditorEvents() {
   document.addEventListener('note:open', e => openNote(e.detail));
+  document.addEventListener('editor:close', () => closeEditor());
 
   dom.editor.addEventListener('input', () => {
     scheduleSave();
@@ -151,12 +159,35 @@ export function initEditorEvents() {
     if (!state.activeId) return;
     const note = getNote(state.activeId);
     const title = note?.title || 'Untitled';
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-    deleteNote(state.activeId);
+
+    if (note?.deletedAt) {
+      // Already in Trash — permanently delete
+      if (!confirm(`Permanently delete "${title}"? This cannot be undone.`)) return;
+      permanentlyDeleteNote(state.activeId);
+      closeEditor();
+      renderFolders();
+      renderSidebar(dom.searchInput.value);
+      showToast(`🗑 "${title}" permanently deleted`);
+    } else {
+      // Soft-delete: move to Trash
+      deleteNote(state.activeId);
+      closeEditor();
+      renderFolders();
+      renderSidebar(dom.searchInput.value);
+      showToast(`🗑 "${title}" moved to Trash`);
+    }
+  });
+
+  dom.restoreNoteBtn.addEventListener('click', () => {
+    if (!state.activeId) return;
+    const note = getNote(state.activeId);
+    if (!note?.deletedAt) return;
+    const title = note.title || 'Untitled';
+    restoreNote(state.activeId);
     closeEditor();
     renderFolders();
     renderSidebar(dom.searchInput.value);
-    showToast(`🗑 "${title}" deleted`);
+    showToast(`✦ "${title}" restored`);
   });
 
   // Tab inserts a 2-space indent inside the editor textarea

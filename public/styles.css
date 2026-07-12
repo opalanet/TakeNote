@@ -948,3 +948,95 @@ body { font-family: var(--font-ui); font-size: 15px; }
     z-index: 10;
   }
 }
+
+/* ===== TRASH ===== */
+
+/* Trash folder entry in sidebar */
+.folder-item-trash {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  opacity: 0.7;
+}
+.folder-item-trash.active,
+.folder-item-trash:hover {
+  opacity: 1;
+}
+.trash-count {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+}
+
+/* Trash note item */
+.note-item-trash {
+  opacity: 0.75;
+}
+.note-item-trash.active,
+.note-item-trash:hover {
+  opacity: 1;
+}
+.note-item-trash-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  gap: 8px;
+}
+.trash-days {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.trash-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.note-item-trash:hover .trash-actions {
+  opacity: 1;
+}
+.trash-restore-btn,
+.trash-delete-btn {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.trash-restore-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.trash-delete-btn:hover {
+  background: #c0392b;
+  color: #fff;
+  border-color: #c0392b;
+}
+
+/* Trashed note in editor: read-only banner */
+#editor-area.trashed #editor,
+#editor-area.trashed #note-title {
+  opacity: 0.6;
+  pointer-events: none;
+}
+#editor-area.trashed::before {
+  content: '🗑 This note is in Trash — restore it to edit.';
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+}
