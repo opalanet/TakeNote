@@ -6,7 +6,7 @@ import { state } from './state.js';
 import { persistFolders } from './storage.js';
 
 function makeFolderId() {
-  return 'f_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  return 'f_' + crypto.randomUUID();
 }
 
 export function createFolder(name) {
