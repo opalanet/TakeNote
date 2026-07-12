@@ -18,6 +18,7 @@ TakeNote is a minimal Markdown note-taking app inspired by Obsidian.
 - **Mobile-friendly** — responsive sidebar overlay, hamburger menu, swipe-to-open gesture, and a mobile top bar showing the active note title
 - **Resizable sidebar** — drag the sidebar edge to your preferred width on desktop
 - **Word & character count** — live stats in the editor footer alongside the last-saved timestamp
+- **Trash & recovery** — deleted notes move to Trash instead of being removed immediately; restore them any time, or let them be permanently purged after 30 days
 - **Keyboard shortcuts** — see the table below
 
 ---
