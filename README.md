@@ -1,8 +1,6 @@
-# ◈ TakeNote
+# TakeNote
 
 TakeNote is a minimal Markdown note-taking app inspired by Obsidian.
-
-![TakeNote](https://img.shields.io/badge/client--side-only-brightgreen) ![License](https://img.shields.io/badge/license-source--available-blue)
 
 ---
 
